@@ -29,7 +29,7 @@ In any case when a bomb detonates, simply double-click to to reset the bomb back
 
 ### Animations
 
-##### Bomb  (center piece) 
+#### Bomb  (center piece) 
 
 **Swirling orange light** -- default state; it is ready to be defused
 
@@ -39,7 +39,7 @@ In any case when a bomb detonates, simply double-click to to reset the bomb back
 
 **White indicator, all other lights flashing red/orange** -- bomb exploded next to an area without any shield. Double-click the bomb to reset it to default state
 
-##### Shield (surrounding pieces) 
+#### Shield (surrounding pieces) 
 
 **Green** -- the shield has not taken any damage
 
