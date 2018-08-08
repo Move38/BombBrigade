@@ -31,29 +31,20 @@ In any case when a bomb detonates, simply double-click to to reset the bomb back
 
 #### Bomb  (center piece) 
 
-   Swirling orange light -- default state; it is ready to be defused
-
-   Flashing yellow briefly -- occurs after a single click, means bomb has been defused safely and moves back to the default state quickly
-
-   Orange indicator, all other lights green** -- bomb exploded, causing damage to a shield. Double-click the bomb to reset it to default state
-
-   White indicator, all other lights flashing red/orange** -- bomb exploded next to an area without any shield. Double-click the bomb to reset it to default state
+  *Swirling orange light -- default state; it is ready to be defused
+  *Flashing yellow briefly -- occurs after a single click, means bomb has been defused safely and moves back to the default state quickly
+  *Orange indicator, all other lights green -- bomb exploded, causing damage to a shield. Double-click the bomb to reset it to default state
+  *White indicator, all other lights flashing red/orange -- bomb exploded next to an area without any shield. Double-click the bomb to reset it to default state
 
 #### Shield (surrounding pieces) 
 
-   Green -- the shield has not taken any damage
-
-   Yellow -- the shield has taken 1 hit
-
-   Orange -- the shield has taken 2 hits
-
-   Red -- the shield has taken 3 hits; can only take 1 more hit before being destroyed
-
-   Flashing all colors -- shield has been destroyed
-
-   Swirling rainbow -- shield has been removed from the center piece and the game
-
-   Three lights pulsing yellow/red -- shield is still active in game and has detected the bomb has exploded on an area without a shield 
+  *Green -- the shield has not taken any damage
+  *Yellow -- the shield has taken 1 hit
+  *Orange -- the shield has taken 2 hits
+  *Red -- the shield has taken 3 hits; can only take 1 more hit before being destroyed
+  *Flashing all colors -- shield has been destroyed
+  *Swirling rainbow -- shield has been removed from the center piece and the game
+  *Three lights pulsing yellow/red -- shield is still active in game and has detected the bomb has exploded on an area without a shield 
 
 ### Interactions
 
