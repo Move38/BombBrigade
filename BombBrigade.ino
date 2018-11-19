@@ -23,10 +23,12 @@
 #define SHOW_FACE_DURATION_MS  750
 
 enum Modes {
+  SPREAD_READY,   // tell others to get ready for the game to start
   READY,          // waiting for the game to start
   BOMB,           // center piece you are trying to defuse
   SHIELD,         // surrounding pieces to protect you from the bomb
   SPARK,          // let the shield know it's been damaged
+  SPARK_SPECIAL,  // let the shield know it's been damaged fully
   EXPLOSION       // let the shield help our bomb in displaying an explosion
 };
 
@@ -48,10 +50,12 @@ byte  bombCountDownCount;
 bool  bShareExplosion;
 byte  shareExplosionFace;
 
+uint32_t timeOfReset = 0;
+
 void setup() {
 
   // Initialize all of our variables
-  resetToReady();
+  resetAll();
 }
 
 void loop() {
@@ -71,7 +75,7 @@ void loop() {
         bombClickCount++;
 
         // chance of explode based on clickCount
-        if ( rand(100) < bombClickCount * 5 ) {
+        if ( random(100) < bombClickCount * 5 ) {
           bExplode = true;
           bSpinning = false;
         }
@@ -111,7 +115,7 @@ void loop() {
 
     else if ( mode == BOMB ) {
       // start the spinning again
-      if(bSpinning == false ) { // don't allow a reset mid-round
+      if (bSpinning == false ) { // don't allow a reset mid-round
         resetSpin();
         bSpinning = true;
       }
@@ -125,17 +129,33 @@ void loop() {
   if ( buttonLongPressed() ) {
 
     // reset
-    resetToReady();
+    resetAll();
 
-    // TODO: would be nice to hold a single one down to then reset all of the others...
-    // this is less important than getting game play correct, and feels like the very last
-    // thing to do
   }
 
   /*
      Game Logic
   */
   switch (mode) {
+
+    case SPREAD_READY:
+      // Only transition to ready when all of our present neighbors are in ready or spread ready
+      {
+        bool isReady = true;
+        FOREACH_FACE( f ) {
+          if ( !isValueReceivedOnFaceExpired( f ) ) {
+            byte neighbor = getLastValueReceivedOnFace( f );
+
+            if (neighbor != SPREAD_READY && neighbor != READY) {
+              isReady = false;
+            }
+          }
+        }
+        if (isReady) {
+          mode = READY;
+        }
+      }
+      break;
 
     case READY:
       // keep a look out for incoming signal saying we are a shield
@@ -152,6 +172,7 @@ void loop() {
       break;
 
     case BOMB:
+      listenForSpreadReady();
       // if we are spinning, spin the speed expected
       if ( bSpinning ) {
         if (!bombShowFaceTimer.isExpired()) {
@@ -187,6 +208,7 @@ void loop() {
       break;
 
     case SHIELD:
+      listenForSpreadReady();
       // if we see a spark lower our shield value by 1
       bShareExplosion = false;
 
@@ -226,11 +248,16 @@ void loop() {
   */
   switch (mode) {
 
+    case SPREAD_READY:
     case READY:
       // display readiness or waiting
-      setColor(BLUE);
-      break;
-
+      // slowly progressing rainbow
+      {
+        byte hue = ((millis() - timeOfReset) / 40) % 255;
+        hue = (hue + 127) % 255;  // shift to start in the blue
+        setColor(makeColorHSB(hue, 255, 255));
+        break;
+      }
     case BOMB:
       // display countdown
       // or spinner
@@ -244,7 +271,7 @@ void loop() {
 
           // flicker if we are paused and showing face
           if (!bombShowFaceTimer.isExpired()) {
-            setFaceColor( bombTickFace, dim( YELLOW, rand(255)));  // flicker YELLOW
+            setFaceColor( bombTickFace, dim( YELLOW, random(255)));  // flicker YELLOW
           }
         }
         else {
@@ -263,11 +290,11 @@ void loop() {
             FOREACH_FACE( f ) {
               setFaceColor( f, GREEN);         // show that we are safe
             }
-            setFaceColor( bombTickFace, dim( ORANGE, rand(255)));  // flicker YELLOW
+            setFaceColor( bombTickFace, dim( ORANGE, random(255)));  // flicker YELLOW
           }
           else {
             FOREACH_FACE( f ) {
-              setFaceColor( f, makeColorHSB(rand(25), 255, rand(1) * 255));         // show that we are out... huge explosion
+              setFaceColor( f, makeColorHSB(random(25), 255, random(1) * 255));         // show that we are out... huge explosion
             }
             setFaceColor( bombTickFace, WHITE );
           }
@@ -291,8 +318,8 @@ void loop() {
         else {
           // disco explosion
           setColor(OFF);
-          setFaceColor( rand(5), makeColorHSB( ( millis() / 5) % 255, 255, 255) ); // ROTATING RAINBOW
-          setFaceColor( rand(5), makeColorHSB( ( (millis() + 127) / 5) % 255, 255, 255) ); // ROTATING RAINBOW
+          setFaceColor( random(5), makeColorHSB( ( millis() / 5) % 255, 255, 255) ); // ROTATING RAINBOW
+          setFaceColor( random(5), makeColorHSB( ( (millis() + 127) / 5) % 255, 255, 255) ); // ROTATING RAINBOW
         }
       }
       else {
@@ -314,14 +341,18 @@ void loop() {
   */
   switch (mode) {
 
+    case SPREAD_READY:
+      setValueSentOnAllFaces( mode );
+      break;
+
     case READY:
       // broadcast ready state... nothing to do here
-      setValueSentOnAllFaces( READY );
+      setValueSentOnAllFaces( mode );
       break;
 
     case BOMB:
       // broadcast bomb (let shields know you are a bomb)
-      setValueSentOnAllFaces( BOMB );
+      setValueSentOnAllFaces( mode );
 
       // if sparked, send in a direction
       if ( bExplode ) {
@@ -362,10 +393,25 @@ void resetSpin() {
 }
 
 /*
+   Spread the good word, reset is called for :)
+*/
+void listenForSpreadReady() {
+  FOREACH_FACE( f ) {
+    if ( !isValueReceivedOnFaceExpired( f ) ) {
+      byte neighbor = getLastValueReceivedOnFace( f );
+      if (neighbor == SPREAD_READY) {
+        resetAll();
+      }
+    }
+  }
+}
+
+
+/*
    Reset all of our variables for a new game
 */
-void resetToReady() {
-  mode = READY;
+void resetAll() {
+  mode = SPREAD_READY;
   shieldHealth = SHIELD_MAX_HEALTH;
   bSpinning = false;
   bombTickFace = 0;
@@ -374,6 +420,7 @@ void resetToReady() {
   bExplodeIntoShield = false;
   bombCountDownCount = FACE_COUNT;
   bShareExplosion = false;
+  timeOfReset = millis();
 }
 
 /*
@@ -422,13 +469,13 @@ Color getShieldColor( byte health ) {
 */
 void shareExplosion( byte face ) {
 
-  setFaceColor( shareExplosionFace, makeColorHSB(rand(25), 255, 255 - ((millis() / 2) % 255) ) );
+  setFaceColor( shareExplosionFace, makeColorHSB(random(25), 255, 255 - ((millis() / 2) % 255) ) );
 
   // use the neighboring faces as well
   byte prevFace = (FACE_COUNT + face - 1) % FACE_COUNT;
   byte nextFace = (face + 1) % FACE_COUNT;
 
-  setFaceColor( prevFace, makeColorHSB(rand(25), 255, 255 - (((millis() - 40) / 2) % 255) ) );
-  setFaceColor( nextFace, makeColorHSB(rand(25), 255, 255 - (((millis() - 40) / 2) % 255) ) );
+  setFaceColor( prevFace, makeColorHSB(random(25), 255, 255 - (((millis() - 40) / 2) % 255) ) );
+  setFaceColor( nextFace, makeColorHSB(random(25), 255, 255 - (((millis() - 40) / 2) % 255) ) );
 
 }
