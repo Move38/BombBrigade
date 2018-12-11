@@ -1,18 +1,18 @@
 /*
-   BOMB BRIGADE
-   Description:
-   2-5 players assume the role of a bomb squad in a tense electronic party game reminiscent of Hot Potato or Russian Roulette.
-   Actions:
-   Long Press resets all Blinks to get ready
-   Double Click on center Blink to start the game
-   Press to try and diffuse the bomb,
-   Note: it has a higher and higher liklihood of exploding the more clicks it has had this round
-   Remove pieces of the shield that have exploded (been completely damaged)
-   Players are eliminated if the bomb goes off and there is no shield to protect them
-   Game Design by:
-   Jeff Kowalski, Holly Gore, Collin Gallo
-   Recoded by:
-   Jonathan Bobrow
+  BOMB BRIGADE
+  Description:
+  2-5 players assume the role of a bomb squad in a tense electronic party game reminiscent of Hot Potato or Russian Roulette.
+  Actions:
+  Long Press resets all Blinks to get ready
+  Double Click on center Blink to start the game
+  Press to try and diffuse the bomb,
+  Note: it has a higher and higher liklihood of exploding the more clicks it has had this round
+  Remove pieces of the shield that have exploded (been completely damaged)
+  Players are eliminated if the bomb goes off and there is no shield to protect them
+  Game Design by:
+  Jeff Kowalski, Holly Gore, Collin Gallo
+  Recoded by:
+  Jonathan Bobrow
 */
 
 #define SHIELD_MAX_HEALTH  4
@@ -253,9 +253,16 @@ void loop() {
       // display readiness or waiting
       // slowly progressing rainbow
       {
-        byte hue = ((millis() - timeOfReset) / 40) % 255;
-        hue = (hue + 127) % 255;  // shift to start in the blue
-        setColor(makeColorHSB(hue, 255, 255));
+        // ping pong the hue between blue and yellow/orange and then back never green...
+        word hue = ((millis() - timeOfReset) / 40) % 350;
+        if (hue > 175) {
+          hue = (350 - hue + 127) % 255;  // shift to start in the blue
+          setColor(makeColorHSB(hue, 255, 255));
+        }
+        else {
+          hue = (hue + 127) % 255;  // shift to start in the blue
+          setColor(makeColorHSB(hue, 255, 255));
+        }
         break;
       }
     case BOMB:
