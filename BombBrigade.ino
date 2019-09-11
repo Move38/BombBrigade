@@ -1,19 +1,19 @@
 /*
-  BOMB BRIGADE
-  Description:
-  2-5 players assume the role of a bomb squad in a tense electronic party game reminiscent of Hot Potato or Russian Roulette.
-  Actions:
-  Long Press resets all Blinks to get ready
-  Double Click on center Blink to start the game
-  Press to try and diffuse the bomb,
-  Note: it has a higher and higher liklihood of exploding the more clicks it has had this round
-  Remove pieces of the shield that have exploded (been completely damaged)
-  Players are eliminated if the bomb goes off and there is no shield to protect them
-  Game Design by:
-  Jeff Kowalski, Holly Gore, Collin Gallo
-  Recoded by:
-  Jonathan Bobrow
-*/
+ *  BombBrigade
+ *  by Jeff Kowalski, Holly Gore, Collin Gallo
+ *  Lead development by Jonathan Bobrow
+ *  original game by Jeff Kowalski, Holly Gore, Collin Gallo
+ *
+ *  Rules: https://github.com/Move38/BombBrigade/blob/master/README.md
+ *
+ *  --------------------
+ *  Blinks by Move38
+ *  Brought to life via Kickstarter 2018
+ *
+ *  @madewithblinks
+ *  www.move38.com
+ *  --------------------
+ */
 
 #define SHIELD_MAX_HEALTH  4
 #define SHIELD_MIN_HEALTH  0
