@@ -1,19 +1,19 @@
 /*
- *  BombBrigade
- *  by Jeff Kowalski, Holly Gore, Collin Gallo
- *  Lead development by Jonathan Bobrow
- *  original game by Jeff Kowalski, Holly Gore, Collin Gallo
- *
- *  Rules: https://github.com/Move38/BombBrigade/blob/master/README.md
- *
- *  --------------------
- *  Blinks by Move38
- *  Brought to life via Kickstarter 2018
- *
- *  @madewithblinks
- *  www.move38.com
- *  --------------------
- */
+    BombBrigade
+    by Jeff Kowalski, Holly Gore, Collin Gallo
+    Lead development by Jonathan Bobrow
+    original game by Jeff Kowalski, Holly Gore, Collin Gallo
+
+    Rules: https://github.com/Move38/BombBrigade/blob/master/README.md
+
+    --------------------
+    Blinks by Move38
+    Brought to life via Kickstarter 2018
+
+    @madewithblinks
+    www.move38.com
+    --------------------
+*/
 
 #define SHIELD_MAX_HEALTH  4
 #define SHIELD_MIN_HEALTH  0
@@ -24,6 +24,8 @@
 
 enum Modes {
   SPREAD_READY,   // tell others to get ready for the game to start
+  SPREAD_RESOLVE,  // waiting for READY to be fully spread
+
   READY,          // waiting for the game to start
   BOMB,           // center piece you are trying to defuse
   SHIELD,         // surrounding pieces to protect you from the bomb
@@ -56,6 +58,7 @@ void setup() {
 
   // Initialize all of our variables
   resetAll();
+  mode = READY;
 }
 
 void loop() {
@@ -136,26 +139,10 @@ void loop() {
   /*
      Game Logic
   */
+
+  propogateReset();
+
   switch (mode) {
-
-    case SPREAD_READY:
-      // Only transition to ready when all of our present neighbors are in ready or spread ready
-      {
-        bool isReady = true;
-        FOREACH_FACE( f ) {
-          if ( !isValueReceivedOnFaceExpired( f ) ) {
-            byte neighbor = getLastValueReceivedOnFace( f );
-
-            if (neighbor != SPREAD_READY && neighbor != READY) {
-              isReady = false;
-            }
-          }
-        }
-        if (isReady) {
-          mode = READY;
-        }
-      }
-      break;
 
     case READY:
       // keep a look out for incoming signal saying we are a shield
@@ -172,7 +159,6 @@ void loop() {
       break;
 
     case BOMB:
-      listenForSpreadReady();
       // if we are spinning, spin the speed expected
       if ( bSpinning ) {
         if (!bombShowFaceTimer.isExpired()) {
@@ -208,7 +194,6 @@ void loop() {
       break;
 
     case SHIELD:
-      listenForSpreadReady();
       // if we see a spark lower our shield value by 1
       bShareExplosion = false;
 
@@ -249,6 +234,7 @@ void loop() {
   switch (mode) {
 
     case SPREAD_READY:
+    case SPREAD_RESOLVE:
     case READY:
       // display readiness or waiting
       // slowly progressing rainbow
@@ -352,6 +338,10 @@ void loop() {
       setValueSentOnAllFaces( mode );
       break;
 
+    case SPREAD_RESOLVE:
+      setValueSentOnAllFaces( mode );
+      break;
+
     case READY:
       // broadcast ready state... nothing to do here
       setValueSentOnAllFaces( mode );
@@ -402,17 +392,44 @@ void resetSpin() {
 /*
    Spread the good word, reset is called for :)
 */
-void listenForSpreadReady() {
-  FOREACH_FACE( f ) {
-    if ( !isValueReceivedOnFaceExpired( f ) ) {
-      byte neighbor = getLastValueReceivedOnFace( f );
-      if (neighbor == SPREAD_READY) {
-        resetAll();
+
+void propogateReset() {
+  if (mode == SPREAD_READY) {//check if all of my neighbors know we are propogating
+
+    mode = SPREAD_RESOLVE;//assume I can resolve as long as it all works out
+
+    FOREACH_FACE(f) {
+      if (!isValueReceivedOnFaceExpired(f)) {//neighbor!
+        byte neighborData = getLastValueReceivedOnFace(f);
+
+        if (neighborData == SPREAD_READY || neighborData == SPREAD_RESOLVE) {
+          //this neighbor is spreading, which I'm cool with
+        } else {//This neighbor hasn't gotten the message yet
+          mode = SPREAD_READY;//not ready to resolve
+        }
+      }
+    }
+  } else if (mode == SPREAD_RESOLVE) {
+    mode = READY;//assume I can become ready as long as it all works out
+    FOREACH_FACE(f) {
+      if (!isValueReceivedOnFaceExpired(f)) {//neighbor!
+        byte neighborData = getLastValueReceivedOnFace(f);
+        if (neighborData == SPREAD_READY) {//this neighbor is still informing other people
+          mode = SPREAD_RESOLVE;//not ready to go to READY state
+        }
+      }
+    }
+  } else {//any other mode, which is not part of the spread (INERT)
+    FOREACH_FACE( f ) {
+      if (!isValueReceivedOnFaceExpired(f)) {
+        byte neighborData = getLastValueReceivedOnFace(f);
+        if (neighborData == SPREAD_READY) {
+          resetAll();
+        }
       }
     }
   }
 }
-
 
 /*
    Reset all of our variables for a new game
