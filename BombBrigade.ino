@@ -54,6 +54,8 @@ byte  shareExplosionFace;
 
 uint32_t timeOfReset = 0;
 
+bool bReset = false;
+
 void setup() {
 
   // Initialize all of our variables
@@ -129,11 +131,18 @@ void loop() {
     }
   }
 
-  if ( buttonLongPressed() ) {
+  //long press business
+  if (hasWoken()) {
+    bReset = false;
+  }
 
-    // reset
+  if (buttonLongPressed()) {
+    bReset = true;
+  }
+
+  if (buttonReleased() && bReset) {
     resetAll();
-
+    bReset = false;
   }
 
   /*
@@ -327,6 +336,10 @@ void loop() {
       break;
 
     default: break;
+  }
+
+  if (bReset) {
+    setColor(CYAN);
   }
 
   /*
